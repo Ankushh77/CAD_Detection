@@ -1,51 +1,77 @@
-CAD Detection
+# CAD Detection
 
-Machine learning project that predicts the presence of coronary artery disease (CAD) from patient clinical data. It compares five classic classifiers, each combined with an ensemble method, and evaluates them with accuracy, precision, recall, F1 and 10-fold cross-validation.
+Machine learning project that predicts the presence of coronary artery disease (CAD) from patient clinical data. It compares five classic classifiers, each combined with an ensemble method, using cross-validation and a held-out test set.
 
-Disclaimer: This is an educational project. It is not a medical tool and must not be used for diagnosis.
+> **Disclaimer:** This is an educational project. It is not a medical tool and must not be used for diagnosis.
 
-Overview
-Loads a heart disease dataset (heart.csv) with clinical features such as age, sex, chest pain type (cp), resting blood pressure (trestbps) and thal.
-Explores the data with scatter plots and histograms (age vs sex, thal distribution, trestbps distribution, cp vs trestbps).
-Splits the data 70/30 with a stratified train/test split.
-Trains five models and compares their performance.
-Models
-Base model	Ensemble method
-Support Vector Classifier (linear kernel)	AdaBoost (150 estimators)
-K-Nearest Neighbors (k = 1)	Bagging (300 estimators)
-Decision Tree	AdaBoost (50 estimators)
-Logistic Regression	AdaBoost (150 estimators)
-Random Forest	AdaBoost (150 estimators)
+## Overview
 
-For every model the code prints metrics before and after 10-fold cross-validation, plus a classification report. A final bar chart compares the accuracy of all classifiers.
+- Loads a heart disease dataset (`heart.csv`) with clinical features such as age, sex, chest pain type (`cp`), resting blood pressure (`trestbps`), `thal` and a binary `target` column.
+- Checks for missing values and duplicate rows, and explores the data with plots (age vs sex, thal, trestbps, cp vs trestbps).
+- Splits the data once into 70% training and 30% held-out test (stratified).
+- Runs 10-fold stratified cross-validation on the training set only, then scores each model once on the test set.
+- Saves a results table and charts computed from the actual runs.
 
-Tech Stack
+## Models
+
+| Base model | Ensemble method |
+|---|---|
+| Support Vector Classifier (linear kernel) | AdaBoost (150 estimators) |
+| K-Nearest Neighbors (k = 1) | Bagging (300 estimators) |
+| Decision Tree | AdaBoost (50 estimators) |
+| Logistic Regression | AdaBoost (150 estimators) |
+| Random Forest | AdaBoost (150 estimators) |
+
+SVM, KNN and Logistic Regression are preceded by a `StandardScaler`, fitted inside each cross-validation fold.
+
+## Metrics
+
+Accuracy, precision, recall (sensitivity), specificity and F1, plus a classification report per model. In a medical setting, recall matters because a missed case is costly.
+
+## Tech Stack
 
 Python, pandas, NumPy, scikit-learn, Matplotlib, Seaborn
 
-Project Structure
+## Project Structure
+
+```
 CAD_Detection/
-├── CAD_Detection.ipynb   # Notebook with outputs and explanations
-├── cad_detection.py      # Same code exported as a Python script
+├── cad_detection.py      # Main script: clean evaluation pipeline
+├── CAD_Detection.ipynb   # Original Colab notebook (kept for reference)
 └── README.md
-How to Run
-Clone the repository:
-bash
+```
+
+## How to Run
+
+1. Clone the repository:
+   ```bash
    git clone https://github.com/Ankushh77/CAD_Detection.git
    cd CAD_Detection
-Install the requirements:
-bash
-   pip install "scikit-learn<1.4" pandas numpy matplotlib seaborn
+   ```
+2. Install the requirements:
+   ```bash
+   pip install "scikit-learn>=1.6" pandas numpy matplotlib seaborn
+   ```
+3. Put a heart disease CSV named `heart.csv` in the project folder. The dataset is not included in this repository. It needs the usual columns (`age`, `sex`, `cp`, `trestbps`, `chol`, `fbs`, `restecg`, `thalach`, `exang`, `oldpeak`, `slope`, `ca`, `thal`, `target`).
+4. Run:
+   ```bash
+   python cad_detection.py --data heart.csv --out results
+   ```
 
-(Newer scikit-learn versions renamed base_estimator to estimator in AdaBoost and Bagging.) 3. Get a heart disease dataset as heart.csv and place it in the project folder. 4. The code was written in Google Colab and reads the file from Google Drive. To run it locally, remove the google.colab lines and set:
+Outputs go to the `results/` folder: `results.csv` (all metrics), `accuracy_comparison.png` and `eda.png`.
 
-python
-   path = "heart.csv"
-Run the notebook, or run python cad_detection.py.
-Known Limitations and Next Steps
-The cross-validation loop trains on folds of the full dataset and then scores on the original test split, so the test rows are seen during training. This inflates the scores of high-capacity models (Decision Tree, Random Forest, KNN). Moving to a proper held-out evaluation (for example cross_val_score on the training set only) is the next improvement.
-The accuracy values in the final comparison chart are typed in by hand, not computed from the runs.
-Hyperparameters were not tuned.
-Author
+Options: `--folds 10` sets the number of CV folds, and `--keep-duplicates` stops duplicate rows from being dropped before the split.
 
-Ankush (@Ankushh77)
+## Evaluation Notes
+
+- **No data leakage:** cross-validation uses the training set only, and the test set is scored once at the end. The original notebook trained on folds of the full dataset and then scored on rows it had already seen, which inflated results (100% accuracy for tree models). `cad_detection.py` fixes this, so its numbers are lower and more realistic.
+- **Duplicates:** many public heart disease CSVs contain repeated rows. If the same row lands in both the train and test sets, scores are inflated, so duplicates are dropped by default.
+- Hyperparameters were not tuned. Tuning with a nested cross-validation loop is a natural next step.
+
+## Results
+
+Run the script on your copy of the dataset to generate `results/results.csv`, then paste the table here.
+
+## Author
+
+Ankush ([@Ankushh77](https://github.com/Ankushh77))
